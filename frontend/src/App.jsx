@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
   const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+
   const [form, setForm] = useState({
     company: "",
     title: "",
@@ -18,8 +20,14 @@ function App() {
     setJobs(res.data);
   };
 
+  const loadApplications = async () => {
+    const res = await axios.get(`${API_URL}/applications/`);
+    setApplications(res.data);
+  };
+
   useEffect(() => {
     loadJobs();
+    loadApplications();
   }, []);
 
   const handleChange = (e) => {
@@ -31,7 +39,9 @@ function App() {
 
   const createJob = async (e) => {
     e.preventDefault();
+
     await axios.post(`${API_URL}/jobs/`, form);
+
     setForm({
       company: "",
       title: "",
@@ -39,6 +49,7 @@ function App() {
       job_url: "",
       description: "",
     });
+
     loadJobs();
   };
 
@@ -47,17 +58,73 @@ function App() {
     loadJobs();
   };
 
+  const createApplication = async (jobId) => {
+    await axios.post(`${API_URL}/applications/`, {
+      job_id: jobId,
+      status: "interested",
+      next_action: "Tailor resume and apply",
+      notes: "Created from saved job.",
+    });
+
+    loadApplications();
+  };
+
+  const updateApplicationStatus = async (applicationId, status) => {
+    await axios.patch(`${API_URL}/applications/${applicationId}`, {
+      status,
+    });
+
+    loadApplications();
+  };
+
   return (
     <div style={{ padding: "32px", fontFamily: "Arial" }}>
       <h1>AI Career Agent</h1>
-      <p>Full-stack AI job search, RAG matching, and application tracking system.</p>
+      <p>
+        Full-stack AI job search, RAG matching, and application tracking system.
+      </p>
+
+      <hr />
 
       <h2>Add Job</h2>
-      <form onSubmit={createJob} style={{ display: "grid", gap: "8px", maxWidth: "600px" }}>
-        <input name="company" placeholder="Company" value={form.company} onChange={handleChange} />
-        <input name="title" placeholder="Job title" value={form.title} onChange={handleChange} />
-        <input name="location" placeholder="Location" value={form.location} onChange={handleChange} />
-        <input name="job_url" placeholder="Job URL" value={form.job_url} onChange={handleChange} />
+
+      <form
+        onSubmit={createJob}
+        style={{
+          display: "grid",
+          gap: "8px",
+          maxWidth: "600px",
+          marginBottom: "32px",
+        }}
+      >
+        <input
+          name="company"
+          placeholder="Company"
+          value={form.company}
+          onChange={handleChange}
+        />
+
+        <input
+          name="title"
+          placeholder="Job title"
+          value={form.title}
+          onChange={handleChange}
+        />
+
+        <input
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+        />
+
+        <input
+          name="job_url"
+          placeholder="Job URL"
+          value={form.job_url}
+          onChange={handleChange}
+        />
+
         <textarea
           name="description"
           placeholder="Job description"
@@ -65,10 +132,14 @@ function App() {
           onChange={handleChange}
           rows="6"
         />
+
         <button type="submit">Save Job</button>
       </form>
 
+      <hr />
+
       <h2>Saved Jobs</h2>
+
       {jobs.map((job) => (
         <div
           key={job.id}
@@ -80,11 +151,122 @@ function App() {
           }}
         >
           <h3>{job.title}</h3>
-          <p><strong>Company:</strong> {job.company}</p>
-          <p><strong>Location:</strong> {job.location}</p>
-          <p><strong>Status:</strong> {job.status}</p>
-          <p><strong>Match Score:</strong> {job.match_score ?? "Not analyzed"}</p>
-          <button onClick={() => analyzeJob(job.id)}>Analyze Match</button>
+
+          <p>
+            <strong>Company:</strong> {job.company}
+          </p>
+
+          <p>
+            <strong>Location:</strong> {job.location}
+          </p>
+
+          <p>
+            <strong>Status:</strong> {job.status}
+          </p>
+
+          <p>
+            <strong>Match Score:</strong>{" "}
+            {job.match_score ?? "Not analyzed"}
+          </p>
+
+          {job.job_url && (
+            <p>
+              <a href={job.job_url} target="_blank" rel="noreferrer">
+                Open Job Link
+              </a>
+            </p>
+          )}
+
+          <button onClick={() => analyzeJob(job.id)}>
+            Analyze Match
+          </button>
+
+          <button
+            onClick={() => createApplication(job.id)}
+            style={{ marginLeft: "8px" }}
+          >
+            Add to Application Tracker
+          </button>
+        </div>
+      ))}
+
+      <hr />
+
+      <h2>Application Tracker</h2>
+
+      {applications.length === 0 && <p>No applications yet.</p>}
+
+      {applications.map((application) => (
+        <div
+          key={application.id}
+          style={{
+            border: "1px solid #aaa",
+            padding: "16px",
+            marginBottom: "12px",
+            borderRadius: "8px",
+            background: "#fafafa",
+          }}
+        >
+          <h3>Application #{application.id}</h3>
+
+          <p>
+            <strong>Job ID:</strong> {application.job_id}
+          </p>
+
+          <p>
+            <strong>Status:</strong> {application.status}
+          </p>
+
+          <p>
+            <strong>Next Action:</strong>{" "}
+            {application.next_action || "None"}
+          </p>
+
+          <p>
+            <strong>Notes:</strong> {application.notes || "None"}
+          </p>
+
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() =>
+                updateApplicationStatus(application.id, "saved")
+              }
+            >
+              Saved
+            </button>
+
+            <button
+              onClick={() =>
+                updateApplicationStatus(application.id, "applied")
+              }
+            >
+              Applied
+            </button>
+
+            <button
+              onClick={() =>
+                updateApplicationStatus(application.id, "interview")
+              }
+            >
+              Interview
+            </button>
+
+            <button
+              onClick={() =>
+                updateApplicationStatus(application.id, "rejected")
+              }
+            >
+              Rejected
+            </button>
+
+            <button
+              onClick={() =>
+                updateApplicationStatus(application.id, "offer")
+              }
+            >
+              Offer
+            </button>
+          </div>
         </div>
       ))}
     </div>
