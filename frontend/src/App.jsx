@@ -6,6 +6,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 function App() {
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [resumes, setResumes] = useState([]);
+  const [resumeFile, setResumeFile] = useState(null);
 
   const [form, setForm] = useState({
     company: "",
@@ -25,9 +27,38 @@ function App() {
     setApplications(res.data);
   };
 
+  const loadResumes = async () => {
+    const res = await axios.get(`${API_URL}/resumes/`);
+    setResumes(res.data);
+  };
+
+  const uploadResume = async (e) => {
+    e.preventDefault();
+
+    if (!resumeFile) {
+      alert("Please choose a resume file first.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", resumeFile);
+
+    await axios.post(`${API_URL}/resumes/upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    setResumeFile(null);
+    loadResumes();
+  };
+
+ 
+
   useEffect(() => {
     loadJobs();
     loadApplications();
+    loadResumes();
   }, []);
 
   const handleChange = (e) => {
@@ -85,6 +116,56 @@ function App() {
       </p>
 
       <hr />
+
+          
+
+      <h2>Resume Upload</h2>
+
+      <form
+        onSubmit={uploadResume}
+        style={{
+          display: "grid",
+          gap: "8px",
+          maxWidth: "600px",
+          marginBottom: "32px",
+        }}
+      >
+        <input
+          type="file"
+          accept=".pdf,.txt"
+          onChange={(e) => setResumeFile(e.target.files[0])}
+        />
+
+        <button type="submit">Upload Resume</button>
+      </form>
+
+      <h3>Uploaded Resumes</h3>
+
+      {resumes.length === 0 && <p>No resumes uploaded yet.</p>}
+
+      {resumes.map((resume) => (
+        <div
+          key={resume.id}
+          style={{
+            border: "1px solid #ddd",
+            padding: "16px",
+            marginBottom: "12px",
+            borderRadius: "8px",
+          }}
+        >
+          <h4>{resume.filename}</h4>
+          <p>
+            <strong>Resume ID:</strong> {resume.id}
+          </p>
+          <p>
+            <strong>Extracted Text Preview:</strong>{" "}
+            {(resume.parsed_text || "").slice(0, 300)}
+            {(resume.parsed_text || "").length > 300 ? "..." : ""}
+          </p>
+        </div>
+      ))}
+
+        <hr />
 
       <h2>Add Job</h2>
 
