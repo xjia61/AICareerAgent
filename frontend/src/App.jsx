@@ -1,10 +1,12 @@
 
-import api from "./services/api";
+//import api from "./services/api";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+import Dashboard from "./components/Dashboard";
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -124,6 +126,7 @@ function App() {
   return (
     <div style={{ padding: "32px", fontFamily: "Arial" }}>
       <h1>AI Career Agent</h1>
+      <Dashboard jobs={jobs} applications={applications} />
       <p>
         Full-stack AI job search, RAG matching, and application tracking system.
       </p>
