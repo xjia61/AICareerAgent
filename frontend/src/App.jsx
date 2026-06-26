@@ -1,3 +1,6 @@
+
+import api from "./services/api";
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -8,6 +11,7 @@ function App() {
   const [applications, setApplications] = useState([]);
   const [resumes, setResumes] = useState([]);
   const [resumeFile, setResumeFile] = useState(null);
+  const [extractions, setExtractions] = useState({});
 
   const [form, setForm] = useState({
     company: "",
@@ -51,6 +55,15 @@ function App() {
 
     setResumeFile(null);
     loadResumes();
+  };
+
+  const extractResume = async (resumeId) => {
+    const res = await axios.post(`${API_URL}/resumes/${resumeId}/extract`);
+
+    setExtractions({
+      ...extractions,
+      [resumeId]: res.data.extraction_json,
+    });
   };
 
  
@@ -162,6 +175,47 @@ function App() {
             {(resume.parsed_text || "").slice(0, 300)}
             {(resume.parsed_text || "").length > 300 ? "..." : ""}
           </p>
+
+          <button onClick={() => extractResume(resume.id)}>
+            Extract Profile with AI
+          </button>
+
+          {extractions[resume.id] && (
+            <div style={{ marginTop: "12px", background: "#f5f5f5", padding: "12px" }}>
+              <h4>AI Extracted Profile</h4>
+
+              <p>
+                <strong>Name:</strong> {extractions[resume.id].name}
+              </p>
+
+              <p>
+                <strong>Summary:</strong> {extractions[resume.id].summary}
+              </p>
+
+              <p>
+                <strong>Target Roles:</strong>{" "}
+                {(extractions[resume.id].target_roles || []).join(", ")}
+              </p>
+
+              <p>
+                <strong>Technical Skills:</strong>{" "}
+                {(extractions[resume.id].technical_skills || []).join(", ")}
+              </p>
+
+              <p>
+                <strong>Domain Skills:</strong>{" "}
+                {(extractions[resume.id].domain_skills || []).join(", ")}
+              </p>
+
+              <h5>Projects</h5>
+              {(extractions[resume.id].projects || []).map((project, index) => (
+                <div key={index}>
+                  <strong>{project.name}</strong>
+                  <p>{project.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ))}
 

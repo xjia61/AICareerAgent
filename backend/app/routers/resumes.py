@@ -10,6 +10,10 @@ from app.models.resume import Resume
 from app.schemas.resume import ResumeRead
 from app.services.resume_parser import extract_resume_text
 
+from app.models.resume_extraction import ResumeExtraction
+from app.schemas.resume_extraction import ResumeExtractionRead
+from app.services.openai_resume_extractor import extract_resume_profile
+
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
 UPLOAD_DIR = Path("uploads")
@@ -72,3 +76,50 @@ def get_resume(resume_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Resume not found")
 
     return resume
+
+
+@router.post("/{resume_id}/extract", response_model=ResumeExtractionRead)
+def extract_resume(resume_id: int, db: Session = Depends(get_db)):
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if not resume.parsed_text:
+        raise HTTPException(status_code=400, detail="Resume has no parsed text")
+
+    try:
+        extraction_json = extract_resume_profile(resume.parsed_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"OpenAI extraction failed: {str(exc)}",
+        )
+
+    extraction = ResumeExtraction(
+        resume_id=resume.id,
+        extraction_json=extraction_json,
+    )
+
+    db.add(extraction)
+    db.commit()
+    db.refresh(extraction)
+
+    return extraction
+
+
+@router.get("/{resume_id}/extractions", response_model=list[ResumeExtractionRead])
+def list_resume_extractions(resume_id: int, db: Session = Depends(get_db)):
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    return (
+        db.query(ResumeExtraction)
+        .filter(ResumeExtraction.resume_id == resume_id)
+        .order_by(ResumeExtraction.id.desc())
+        .all()
+    )

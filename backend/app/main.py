@@ -5,7 +5,9 @@ from app.db.session import Base, engine
 from app.models.job import Job
 from app.models.application import Application
 from app.models.resume import Resume
-from app.routers import jobs, applications, resumes
+from app.routers import jobs, applications, resumes, job_matches
+from app.models.resume_extraction import ResumeExtraction
+from app.models.job_match import JobMatch
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,6 +24,7 @@ app.add_middleware(
 app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(resumes.router)
+app.include_router(job_matches.router)
 
 
 @app.get("/")
