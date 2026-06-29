@@ -17,6 +17,17 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 @router.post("/", response_model=ApplicationRead)
 def create_application(application: ApplicationCreate, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == application.job_id).first()
+    existing_application = (
+        db.query(Application)
+        .filter(Application.job_id == application.job_id)
+        .first()
+    )
+
+    if existing_application:
+        raise HTTPException(
+            status_code=400,
+            detail="Application already exists for this job",
+        )
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

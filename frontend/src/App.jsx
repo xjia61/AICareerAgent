@@ -7,6 +7,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 import Dashboard from "./components/Dashboard";
+import ApplicationCard from "./components/ApplicationCard";
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -335,79 +336,23 @@ function App() {
       {applications.length === 0 && <p>No applications yet.</p>}
 
       {applications.map((application) => (
-        <div
+        <ApplicationCard
           key={application.id}
-          style={{
-            border: "1px solid #aaa",
-            padding: "16px",
-            marginBottom: "12px",
-            borderRadius: "8px",
-            background: "#fafafa",
-          }}
-        >
-          <h3>Application #{application.id}</h3>
-
-          <p>
-            <strong>Job ID:</strong> {application.job_id}
-          </p>
-
-          <p>
-            <strong>Status:</strong> {application.status}
-          </p>
-
-          <p>
-            <strong>Next Action:</strong>{" "}
-            {application.next_action || "None"}
-          </p>
-
-          <p>
-            <strong>Notes:</strong> {application.notes || "None"}
-          </p>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() =>
-                updateApplicationStatus(application.id, "saved")
-              }
-            >
-              Saved
-            </button>
-
-            <button
-              onClick={() =>
-                updateApplicationStatus(application.id, "applied")
-              }
-            >
-              Applied
-            </button>
-
-            <button
-              onClick={() =>
-                updateApplicationStatus(application.id, "interview")
-              }
-            >
-              Interview
-            </button>
-
-            <button
-              onClick={() =>
-                updateApplicationStatus(application.id, "rejected")
-              }
-            >
-              Rejected
-            </button>
-
-            <button
-              onClick={() =>
-                updateApplicationStatus(application.id, "offer")
-              }
-            >
-              Offer
-            </button>
-          </div>
-        </div>
+          application={application}
+          onStatusChange={updateApplicationStatus}
+        />
       ))}
+
+      <div><p>done</p></div>
+
+      
+
+          
+       
     </div>
+
+           
+          
   );
 }
 
