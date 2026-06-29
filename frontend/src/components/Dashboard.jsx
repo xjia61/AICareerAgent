@@ -2,55 +2,49 @@ import React from "react";
 import "./Dashboard.css";
 
 function Dashboard({ jobs = [], applications = [] }) {
-  const totalJobs = jobs.length;
-  const totalApplications = applications.length;
-
-  const interviewCount = applications.filter(
-    (app) => app.status === "interview"
-  ).length;
-
-  const offerCount = applications.filter(
-    (app) => app.status === "offer"
-  ).length;
-
-  const rejectedCount = applications.filter(
-    (app) => app.status === "rejected"
-  ).length;
+  const stats = [
+    { label: "Total Jobs", value: jobs.length, icon: "💼" },
+    { label: "Applications", value: applications.length, icon: "📬" },
+    {
+      label: "Interview",
+      value: applications.filter((app) => app.status === "interview").length,
+      icon: "🎤",
+    },
+    {
+      label: "Offer",
+      value: applications.filter((app) => app.status === "offer").length,
+      icon: "🎉",
+    },
+    {
+      label: "Rejected",
+      value: applications.filter((app) => app.status === "rejected").length,
+      icon: "❌",
+    },
+  ];
 
   return (
     <section className="dashboard">
-      <h2>Dashboard</h2>
+      <div className="dashboard-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Track your job search progress in one place.</p>
+        </div>
+      </div>
 
       <div className="dashboard-grid">
-        <div className="dashboard-card">
-          <span>Total Jobs</span>
-          <strong>{totalJobs}</strong>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Applications</span>
-          <strong>{totalApplications}</strong>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Interview</span>
-          <strong>{interviewCount}</strong>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Offer</span>
-          <strong>{offerCount}</strong>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Rejected</span>
-          <strong>{rejectedCount}</strong>
-        </div>
+        {stats.map((stat) => (
+          <div className="dashboard-card" key={stat.label}>
+            <div className="dashboard-icon">{stat.icon}</div>
+            <div>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
 export default Dashboard;
-
 
