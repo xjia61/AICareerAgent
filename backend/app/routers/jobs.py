@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -58,3 +58,15 @@ def analyze_job(job_id: int, db: Session = Depends(get_db)):
         "match_score": score,
         "summary": "Temporary keyword-based analysis. OpenAI RAG analysis will be added later."
     }
+
+@router.delete("/{job_id}")
+def delete_job(job_id: int, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    db.delete(job)
+    db.commit()
+
+    return {"message": "Job deleted successfully"}

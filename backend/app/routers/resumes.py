@@ -123,3 +123,15 @@ def list_resume_extractions(resume_id: int, db: Session = Depends(get_db)):
         .order_by(ResumeExtraction.id.desc())
         .all()
     )
+
+@router.delete("/{resume_id}")
+def delete_resume(resume_id: int, db: Session = Depends(get_db)):
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    db.delete(resume)
+    db.commit()
+
+    return {"message": "Resume deleted successfully"}
