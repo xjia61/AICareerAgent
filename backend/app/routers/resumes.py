@@ -80,6 +80,16 @@ def get_resume(resume_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{resume_id}/extract", response_model=ResumeExtractionRead)
 def extract_resume(resume_id: int, db: Session = Depends(get_db)):
+    existing_extraction = (
+        db.query(ResumeExtraction)
+        .filter(ResumeExtraction.resume_id == resume_id)
+        .first()
+    )
+
+    if existing_extraction:
+        return existing_extraction
+
+
     resume = db.query(Resume).filter(Resume.id == resume_id).first()
 
     if not resume:
